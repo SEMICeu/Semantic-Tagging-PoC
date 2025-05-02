@@ -1,0 +1,9 @@
+streamlit
+pandas
+openai
+python-dotenv
+azure-search-documents==11.4.0b11
+openpyxl
+docx
+pypdf2
+sentence-transformers
