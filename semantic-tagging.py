@@ -4,14 +4,21 @@ import streamlit as st
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 import PyPDF2
-from docx import Document
+#from docx import Document
+import openai
 
 # Set up Azure Search Client
 
-load_dotenv()
-search_endpoint = os.getenv("SEACRH_ENDPOINT")
-index_name = os.getenv("INDEX_NAME")
-api_key = os.getenv("API_KEY")
+load_dotenv(override=True)
+search_endpoint = os.environ.get("SEACRH_ENDPOINT")
+index_name = os.environ.get("INDEX_NAME")
+api_key = os.environ.get("API_KEY")
+print(search_endpoint)
+
+azure_openai_api_key = os.environ.get("AZURE_OPENAI_KEY")
+azure_openai_api_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
+deployment_name = os.environ.get("DEPLOYMENT_NAME")
+api_version = os.environ.get("API_VERSION")
 
 credential = AzureKeyCredential(api_key)
 search_client = SearchClient(endpoint=search_endpoint, index_name=index_name, credential=credential)
@@ -26,7 +33,7 @@ def read_pdf(file):
 
 def read_word(file):
     """Extract text from a word (.docx) file."""
-    doc = Document(file)
+    doc = ""#Document(file)
     text = []
     for paragraph in doc.paragraphs:
         text.append(paragraph.text)
@@ -49,6 +56,37 @@ def perform_search(query):
         st.error(f"An error occured: {e}")
         return []
     
+from openai import AzureOpenAI
+client = AzureOpenAI(api_key=azure_openai_api_key, azure_endpoint=azure_openai_api_endpoint, api_version=api_version)
+
+def filter_with_LLM(user_input, search_results):
+    """Use GPT-4 to filter the search results based on relevance"""
+    prompt = (
+        f"Based on the user input: '{user_input}', "
+        f"evaluate the following search results and return only the relevant ones: {search_results}"
+        f"Provide your answer as a list of relevant tags separated by commas."
+    )
+
+    response = client.chat.completions.create(
+        model = deployment_name, 
+        messages = [
+            {"role": "system", "content": "Hello! You are a linguistic expert in charge of annotating documents with relevant tags from the EuroVoc thesaurus"},
+            {"role": "user", "content": prompt}
+        ], 
+        max_tokens=150, 
+        temperature=0
+    )
+
+    try:
+        # Parse the response from the LLM
+        print(response.choices[0])
+        relevant_tags = response.choices[0].message.content.strip().split(',')
+        relevant_tags = [tag.strip() for tag in relevant_tags if tag.strip()]
+        return relevant_tags
+    except Exception as e:
+        st.error(f"Error processing with GPT-4: {e}")
+        return []
+
 def main():
     # App title
     st.title("Semantic Tagging Solution")
@@ -79,10 +117,13 @@ def main():
         # Perform the search operation on the text
         tags = perform_search(text)
 
+        # Use an LLM to filter the results
+        relevant_tags = filter_with_LLM(text, tags)
+
         # Display the tags
-        if tags: 
+        if relevant_tags: 
             st.subheader("Generated Tags:")
-            for tag in tags: 
+            for tag in relevant_tags: 
                 st.write(f"- {tag}")
 
 if __name__ == "__main__":
