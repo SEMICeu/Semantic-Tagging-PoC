@@ -100,6 +100,16 @@ def filter_with_LLM(user_input, search_results):
         st.error(f"Error processing with GPT-4: {e}")
         return []
 
+def predict_tags(text):
+    # Perform the search operation on the text
+    tags = perform_search(text)
+
+    # Use an LLM to filter the results
+    relevant_tags = filter_with_LLM(text, tags)
+
+    return relevant_tags
+
+
 def main():
     # App title
     st.title("Semantic Tagging Solution")
