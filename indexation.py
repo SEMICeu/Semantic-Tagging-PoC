@@ -33,26 +33,29 @@ api_key = os.environ.get("API_KEY")
 credential = AzureKeyCredential(api_key)
 
 def creating_index_from_excel(file: pd.DataFrame, knowledge_base: list) -> list:
-
+    id = 0
     for index, row in file.iterrows():
-        document = {
-            "id": row["DESCRIPTEUR_ID"],
-            "Label": row["LIBELLE"],
-            "Definition": row["DEF"], 
-            "Vector": MODEL.encode(f'{row["LIBELLE"]}: {row["DEF"]}').tolist()
-        }
-        knowledge_base.append(document)
-        break
+        
+        if not f'{row["DEF"]}'=="nan": 
+            document = {
+                "id": f'{id}',
+                "Label": (row["LIBELLE"] if not f'{row["LIBELLE"]}'=="nan" else ""),
+                "Definition": (row["DEF"] if not f'{row["DEF"]}'=="nan" else ""), 
+                "Label_def_vector": MODEL.encode(f'{row["LIBELLE"]}: {row["DEF"]}').tolist()
+            }
+            knowledge_base.append(document)
+            id += 1
+
 
     return knowledge_base
 
 def knowledge_base_to_json(knowledge_base):
 
     path = os.getcwd()
-    
+    id = 1
     for doc in knowledge_base:
-        id = doc["id"]
-        file_path = os.path.join(path, 'eurovoc', f'{id}.json')
+        id += 1
+        file_path = os.path.join(path, 'eurovoc', f'eurovoc_{id}.json')
 
         with open(file_path, "w") as file: 
             json.dump(doc, file)
@@ -64,15 +67,15 @@ def create_or_update_index_on_Azure():
     fields = [
         SimpleField(name="id", type=SearchFieldDataType.String, key=True, retrievable=True),
         SearchableField(name="Label", type=SearchFieldDataType.String, filterable=True, retrievable=True),
-        SearchableField(name="Definitionoo", type=SearchFieldDataType.String, filterable=True, retrievable=True),
-        SearchField(name="Label_def_vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), searchable=True, 
-                    vector_search_dimension=384, vector_search_profile="myHnswProfile")
+        SearchableField(name="Definition", type=SearchFieldDataType.String, filterable=True, retrievable=True),
+        SearchField(name="Label_def_vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), searchable=True, vector_search_dimensions=384, vector_search_profile="myHnswProfile")
 
     ]
 
     vector_search = VectorSearch(
         algorithms=[HnswVectorSearchAlgorithmConfiguration(name="myHnsw", kind=VectorSearchAlgorithmKind.HNSW, 
-                                                           parameters=HnswParameters(m=4, ef_construction=400, ef_search=500, metric="cosine"))]
+                                                           parameters=HnswParameters(m=4, ef_construction=400, ef_search=500, metric="cosine"))], 
+        profiles=[VectorSearchProfile(name="myHnswProfile", algorithm="myHnsw")],
     )
 
     semantic_config = SemanticConfiguration(
@@ -88,7 +91,7 @@ def create_or_update_index_on_Azure():
     semantic_settings = SemanticSettings(configurations=[semantic_config])
 
     index = SearchIndex(
-        name = index_name, vector_search=vector_search, semantic_settings=semantic_settings
+        name = index_name, fields = fields, vector_search=vector_search, semantic_settings=semantic_settings
     )
 
     result = index_client.create_or_update_index(index)
@@ -131,9 +134,9 @@ def create_index():
     knowledge_base_to_json(knowledge_base)
 
     print("DATA PREPARATION: create_or_update_index_on_azure")
-    #create_or_update_index_on_Azure()
+    create_or_update_index_on_Azure()
     print("DATA PREPARATION: upload_index_to_azure")
-    #upload_index_to_Azure()
+    upload_index_to_Azure(index_folder)
 
 if __name__=="__main__":
     create_index()
