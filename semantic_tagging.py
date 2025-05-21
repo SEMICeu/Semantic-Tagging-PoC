@@ -3,10 +3,11 @@ from dotenv import load_dotenv
 import streamlit as st
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
+from azure.search.documents.models import RawVectorQuery
 import PyPDF2
 #from docx import Document
 import openai
-# from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer
 
 # Set up Azure Search Client
 
@@ -24,7 +25,7 @@ api_version = os.environ.get("API_VERSION")
 credential = AzureKeyCredential(api_key)
 search_client = SearchClient(endpoint=search_endpoint, index_name=index_name, credential=credential)
 
-# model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def read_pdf(file):
     """Extract text from PDF file."""
@@ -47,16 +48,15 @@ def perform_search(query):
     Perform semantic search on the Azure AI index and return top 10 tags.
     """
     try: 
-        # query_vector = model.encode(query).tolist()
-        search_results = search_client.search(query, include_total_count=True)
+        vector_query = RawVectorQuery(vector=model.encode(query).tolist(), k_nearest_neighbors=3, fields="Label_def_vector")
+
+        #search_results = search_client.search(query, include_total_count=True)
         
-        # search_results = search_client.search(
-        #     search_text=query, 
-        #     vector=query_vector,
-        #     vector_fields="Label_def_vector"
-        #     vector_top_k=10,
-        #     vector_search_configuration="eurovoc-poc-semantic-tagging", 
-        # )
+        search_results = search_client.search(
+            search_text=query, 
+            vector_queries=[vector_query],
+            top=10, 
+        )
         
         tags = []
         for item in search_results:
