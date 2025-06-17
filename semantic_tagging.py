@@ -42,43 +42,33 @@ def read_word(file):
     return "\n".join(text)
 
 # Functions for performing the semantic tagging
-def perform_search(query):
-    """
-    Perform semantic search on the Azure AI index and return top 10 tags.
-    """
-    try:         
-        search_results = search_client.search(
-            search_text=query, 
-            vector_queries=None,
-            top=50,   
-        )
-        
-        tags = []
-        for item in search_results:
-            # Assuming that the search result has the field Label
-            tags.append(item["Label"])
-            if len(tags) >= 50:
-                break
-        return tags
-    except Exception as e:
-        st.error(f"An error occured: {e}")
-        return []
-    
 from openai import AzureOpenAI
 client = AzureOpenAI(api_key=azure_openai_api_key, azure_endpoint=azure_openai_api_endpoint, api_version=api_version)
 
-def filter_with_LLM(user_input, search_results):
+def tags_with_LLM(user_input):
     """Use GPT-4 to filter the search results based on relevance"""
     prompt = (
-        f"Based on the following document summary: '{user_input}', "
-        f"evaluate the following EuroVoc descriptors and return only the relevant ones for annotating the document: {search_results}"
-        f"Provide your answer as a list of maximum 10 relevant descriptors separated by commas."
-    )
+        f"Can you propose EuroVoc descriptors for tagging this document with meaningful metadata about its content, based on its summary: '{user_input}', "
+        f"Provide your answer as a list of relevant EuroVoc descriptors separated by commas."
+        f"Here are some examples you can take inspiration from:"
+        f"Example 1:"
+        f"[SUMMARY] This project has been inspired by the always more demanding need to upgrade the existing masonry EU buildings due to their poor seismic performance resulting in severe human and economic losses and their low energy performance which significantly increases their energy consumption. The issue of upgrading the unreinforced masonry (URM) buildings is of great importance since they are unengineered vernacular structures and far from the levels of the current standards for seismic capacity and energy consumption. Moreover, the latter combined with deterioration due to ageing of materials, environmental degradation, experience of several earthquakes and lack of maintenance, yield to even highers structural and energy deficiencies. Every recent moderate to high seismic shaking has caused damage ranging from cracks to partial or total collapse with a high death toll and economic loss. Therefore, this project aimed to confront both deficiencies in an integrated manner by exploring innovative techniques and advanced materials. The synergy of this project with the JRC institutional project iRESIST+ which focused on the upgrading of old RC buildings, tried to address the problem for the most common building typologies providing viable solutions in the context of EU regulations for energy savings of buildings and protection of cultural heritage."
+        f"[OUTPUT] earthquake, disaster risk reduction"
+        f"Example 2:"
+        f"[SUMMARY] This report provides an empirical analysis of the drivers and barriers to adoption of autonomous machines (AM) technologies by European companies. Based on this analysis, the report provides a series of policy recommendations to accelerate the uptake of AM and robots and emphasise its impact on the European economy."
+        f"[OUTPUT] smart technology, artificial intelligence, new technology, robotics, industrial policy"
+        f"Example 3:"
+        f"[SUMMARY] This years seminar was organized around a narrative which looked into the GAPS-PROCESS-SOLUTIONS-COMMUNICATION of scientific knowledge for DRM. Thanks to five panels of distinguished speakers and moderators, we touched upon all the above-mentioned topics: — The opening session confirmed the increasing role of the Science Pillar of the UCPKN as a space where existing and new scientific networks would be able to create, manage and share scientific knowledge and data with the aim of supporting decision makers in better anticipating, preparing for, and responding to disasters considering the changing landscape of the risks we are facing. — Session 1 and 2 drilled down on challenges of dealing with complex situations while orienting the research agendas and providing advice to policy makers — Session 3 focused on the DRM-climate change nexus, with specific attention to risk assessment methodologies for doing so, while informing –at the same time- the new processes of trans-boundary scenario building and of the Union Disaster Resilience Goals (UDRGs) — Session 4 made us reflect around the social dimension of DRM and specifically of the risk communication."
+        f"[OUTPUT] scientific cooperation, disaster risk reduction, resilience"
+        f"Example 4:"
+        f"[SUMMARY] This report aims to explore potential concepts and architectures for the monitoring of the European Union’s disaster resilience goals. The report focuses on three main areas: (1) the use of the composite indicators approach for monitoring and review, (2) an exploration of potentially relevant indicators of resilience within the context of the disaster resilience goals and (3) demonstration of the Disaster Risk Management Knowledge Centre Risk Data Hub as a repository for the data reported and collected to facilitate its interpretation via maps and dashboards"
+        f"[OUTPUT] civil defence, data collection, preparedness, disaster risk reduction, resilience"
+        )
 
     response = client.chat.completions.create(
         model = deployment_name, 
         messages = [
-            {"role": "system", "content": "Hello! You are a linguistic expert in charge of annotating documents with relevant tags from the EuroVoc thesaurus"},
+            {"role": "system", "content": "Hello! You are a linguistic expert in charge of annotating documents with relevant descriptors from the EuroVoc thesaurus"},
             {"role": "user", "content": prompt}
         ], 
         max_tokens=150, 
@@ -95,16 +85,23 @@ def filter_with_LLM(user_input, search_results):
         st.error(f"Error processing with GPT-4: {e}")
         return []
 
+import json
+
+with open("EuroVoc.json") as json_file:
+    EUROVOC = json.load(json_file)
+
 def predict_tags(text):
     # Perform the search operation on the text
-    tags = perform_search(text)
+    tags = tags_with_LLM(user_input=text) # perform_search(text)
 
-    # Use an LLM to filter the results
-    relevant_tags = filter_with_LLM(text, tags)
+    # Filter out non-EuroVoc descriptors
+    tags = [item for item in tags if item in EUROVOC]
+    # Drop duplicates
+    tags = list(set(tags))
 
-    return relevant_tags
+    return tags
 
-# Define streamlit app
+
 def main():
     # App title
     st.title("Semantic Tagging Solution")
@@ -133,10 +130,7 @@ def main():
             return
         
         # Perform the search operation on the text
-        tags = perform_search(text)
-
-        # Use an LLM to filter the results
-        relevant_tags = filter_with_LLM(text, tags)
+        relevant_tags = predict_tags(text)
 
         # Display the tags
         if relevant_tags: 
@@ -146,4 +140,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

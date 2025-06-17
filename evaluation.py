@@ -2,7 +2,7 @@
 from semantic_tagging import predict_tags
 import pandas as pd
 
-INPUT_PATH = r"/Users/emiliencaudron/Documents/GitHub/Semantic-Tagging-PoC/test_corpus/pubsy-det-test-classification-2025 - evaluation (2).xlsx"
+INPUT_PATH = ""
 
 def comparing_to_ground_truth(relevant_tags, ground_truth):
     """Series of operations needed to compute the accuracy of predicted tags"""
@@ -24,7 +24,7 @@ def main():
     # Loop through the test corpus 
     for index, row in testing_corpus.iterrows():
 
-        text = row["Article Title"] + row["Article summary "]
+        text = row["Article summary "]
         ground_truth = row["DET tags that express the main subject matter (often with post-coordination)"].split(" + ")
 
         # Predicting tags on the extracted text
