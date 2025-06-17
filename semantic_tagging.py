@@ -48,14 +48,13 @@ def perform_search(query):
     Perform semantic search on the Azure AI index and return top 10 tags.
     """
     try: 
-        vector_query = RawVectorQuery(vector=model.encode(query).tolist(), k_nearest_neighbors=3, fields="Label_def_vector")
-
-        #search_results = search_client.search(query, include_total_count=True)
+        vector_query = RawVectorQuery(vector=model.encode(query).tolist(), k=10, fields="Label_def_vector")
         
         search_results = search_client.search(
-            search_text=query, 
+            search_text=None, 
             vector_queries=[vector_query],
-            top=10, 
+            top=10,
+             
         )
         
         tags = []
@@ -75,9 +74,9 @@ client = AzureOpenAI(api_key=azure_openai_api_key, azure_endpoint=azure_openai_a
 def filter_with_LLM(user_input, search_results):
     """Use GPT-4 to filter the search results based on relevance"""
     prompt = (
-        f"Based on the user input: '{user_input}', "
-        f"evaluate the following search results and return only the relevant ones: {search_results}"
-        f"Provide your answer as a list of relevant tags separated by commas."
+        f"Based on the following document summary: '{user_input}', "
+        f"evaluate the following EuroVoc descriptors and return only the relevant ones for annotating the document: {search_results}"
+        f"Provide your answer as a list of maximum 10 relevant descriptors separated by commas."
     )
 
     response = client.chat.completions.create(
@@ -100,9 +99,55 @@ def filter_with_LLM(user_input, search_results):
         st.error(f"Error processing with GPT-4: {e}")
         return []
 
+def tags_with_LLM(user_input):
+    """Use GPT-4 to filter the search results based on relevance"""
+    prompt = (
+        f"Can you propose EuroVoc descriptors for tagging this document with meaningful metadata about its content, based on its summary: '{user_input}', "
+        f"Provide your answer as a list of relevant EuroVoc descriptors separated by commas.")
+
+    response = client.chat.completions.create(
+        model = deployment_name, 
+        messages = [
+            {"role": "system", "content": "Hello! You are a linguistic expert in charge of annotating documents with relevant descriptors from the EuroVoc thesaurus"},
+            {"role": "user", "content": prompt}
+        ], 
+        max_tokens=150, 
+        temperature=0
+    )
+
+    try:
+        # Parse the response from the LLM
+        print(response.choices[0])
+        relevant_tags = response.choices[0].message.content.strip().split(',')
+        relevant_tags = [tag.strip() for tag in relevant_tags if tag.strip()]
+        return relevant_tags
+    except Exception as e:
+        st.error(f"Error processing with GPT-4: {e}")
+        return []
+
+import json
+
+with open("EuroVoc.json") as json_file:
+    EUROVOC = json.load(json_file)
+
 def predict_tags(text):
     # Perform the search operation on the text
-    tags = perform_search(text)
+    tags = tags_with_LLM(user_input=text) # perform_search(text)
+
+    mapped_tags = []
+
+    for tag in tags: 
+        searched_tags = perform_search(tag)
+
+        for item in searched_tags:
+            mapped_tags.append(item)
+
+    tags = tags + mapped_tags
+
+    # Filter out non-EuroVoc descriptors
+    tags = [item for item in tags if item in EUROVOC]
+    # Drop duplicates
+    tags = list(set(tags))
 
     # Use an LLM to filter the results
     relevant_tags = filter_with_LLM(text, tags)
@@ -138,10 +183,7 @@ def main():
             return
         
         # Perform the search operation on the text
-        tags = perform_search(text)
-
-        # Use an LLM to filter the results
-        relevant_tags = filter_with_LLM(text, tags)
+        relevant_tags = predict_tags(text)
 
         # Display the tags
         if relevant_tags: 

@@ -1,15 +1,10 @@
-
-from semantic_tagging import read_pdf, read_word, predict_tags
-import os
+from semantic_tagging import predict_tags
 import pandas as pd
-import PyPDF2
-import requests
-import io
 
 INPUT_PATH = ""
 
 def comparing_to_ground_truth(relevant_tags, ground_truth):
-    """"""
+    """Series of operations needed to compute the accuracy of predicted tags"""
     number_of_tags = len(ground_truth)
     accuracy = 0
 
@@ -20,37 +15,20 @@ def comparing_to_ground_truth(relevant_tags, ground_truth):
     return accuracy/number_of_tags, accuracy / len(relevant_tags)
 
 def main():
-
-    # Loop through the test corpus 
-    format_error = []
-
     testing_corpus = pd.read_excel(INPUT_PATH)
     recall_list = []
     precision_list = []
     prediction_list = []
-    
-    #for file in os.listdir(INPUT_PATH):
-    for index, row in testing_corpus.iterrows():
-        
-        file = row["URL"]
-        # Extracting the text from the file
-        response = requests.get(file)
-        if response.status_code == 200:
-            pdf_file = io.BytesIO(response.content)
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            text = ""
-            for page in pdf_reader.pages: 
-                text += page.extract_text() + "\n"
-        else:
-            print("Wrong format")
-            format_error.append(file)
 
-        text = row["Article summary "] # row["Article Title"]
+    # Loop through the test corpus 
+    for index, row in testing_corpus.iterrows():
+
+        text = row["Article summary "]
         ground_truth = row["DET tags that express the main subject matter (often with post-coordination)"].split(" + ")
 
         # Predicting tags on the extracted text
         predicted_tags = predict_tags(text)
-        recall, precision = comparing_to_ground_truth(predict_tags, ground_truth)
+        recall, precision = comparing_to_ground_truth(predicted_tags, ground_truth)
 
         prediction_list.append(predicted_tags)
         recall_list.append(recall)
@@ -64,5 +42,3 @@ def main():
 
 if __name__=="__main__":
     main()
-
-
