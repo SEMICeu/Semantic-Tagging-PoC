@@ -25,7 +25,7 @@ api_version = os.environ.get("API_VERSION")
 credential = AzureKeyCredential(api_key)
 search_client = SearchClient(endpoint=search_endpoint, index_name=index_name, credential=credential)
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer('BAAI/bge-m3')
 
 def read_pdf(file):
     """Extract text from PDF file."""

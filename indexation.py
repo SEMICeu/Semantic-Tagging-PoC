@@ -24,7 +24,7 @@ from azure.search.documents.indexes.models import (
     HnswParameters,
 )
 
-MODEL = SentenceTransformer('all-MiniLM-L6-v2')
+MODEL = SentenceTransformer('BAAI/bge-m3')
 load_dotenv(override=True)
 
 search_endpoint = os.environ.get("SEACRH_ENDPOINT")
@@ -68,7 +68,7 @@ def create_or_update_index_on_Azure():
         SimpleField(name="id", type=SearchFieldDataType.String, key=True, retrievable=True),
         SearchableField(name="Label", type=SearchFieldDataType.String, filterable=True, retrievable=True),
         SearchableField(name="Definition", type=SearchFieldDataType.String, filterable=True, retrievable=True),
-        SearchField(name="Label_def_vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), searchable=True, vector_search_dimensions=384, vector_search_profile="myHnswProfile")
+        SearchField(name="Label_def_vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), searchable=True, vector_search_dimensions=1024, vector_search_profile="myHnswProfile")
 
     ]
 
