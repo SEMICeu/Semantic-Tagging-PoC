@@ -48,21 +48,19 @@ def perform_search(query):
     Perform semantic search on the Azure AI index and return top 10 tags.
     """
     try: 
-        vector_query = RawVectorQuery(vector=model.encode(query).tolist(), k_nearest_neighbors=3, fields="Label_def_vector")
-
-        #search_results = search_client.search(query, include_total_count=True)
+        vector_query = RawVectorQuery(vector=model.encode(query).tolist(), k=50, fields="Label_def_vector")
         
         search_results = search_client.search(
             search_text=query, 
             vector_queries=[vector_query],
-            top=10, 
+            top=50, 
         )
         
         tags = []
         for item in search_results:
             # Assuming that the search result has the field Label
             tags.append(item["Label"])
-            if len(tags) >= 10:
+            if len(tags) >= 50:
                 break
         return tags
     except Exception as e:
@@ -72,12 +70,15 @@ def perform_search(query):
 from openai import AzureOpenAI
 client = AzureOpenAI(api_key=azure_openai_api_key, azure_endpoint=azure_openai_api_endpoint, api_version=api_version)
 
+from openai import AzureOpenAI
+client = AzureOpenAI(api_key=azure_openai_api_key, azure_endpoint=azure_openai_api_endpoint, api_version=api_version)
+
 def filter_with_LLM(user_input, search_results):
     """Use GPT-4 to filter the search results based on relevance"""
     prompt = (
-        f"Based on the user input: '{user_input}', "
-        f"evaluate the following search results and return only the relevant ones: {search_results}"
-        f"Provide your answer as a list of relevant tags separated by commas."
+        f"Based on the following document summary: '{user_input}', "
+        f"evaluate the following EuroVoc descriptors and return only the relevant ones for annotating the document: {search_results}"
+        f"Provide your answer as a list of maximum 10 relevant descriptors separated by commas."
     )
 
     response = client.chat.completions.create(
@@ -99,6 +100,7 @@ def filter_with_LLM(user_input, search_results):
     except Exception as e:
         st.error(f"Error processing with GPT-4: {e}")
         return []
+
 
 def predict_tags(text):
     # Perform the search operation on the text
@@ -151,4 +153,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
