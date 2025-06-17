@@ -24,12 +24,13 @@ from azure.search.documents.indexes.models import (
     HnswParameters,
 )
 
-MODEL = SentenceTransformer('all-MiniLM-L6-v2')
 load_dotenv(override=True)
 
 search_endpoint = os.environ.get("SEACRH_ENDPOINT")
 index_name = os.environ.get("INDEX_NAME")
 api_key = os.environ.get("API_KEY")
+print(search_endpoint)
+
 credential = AzureKeyCredential(api_key)
 
 def creating_index_from_excel(file: pd.DataFrame, knowledge_base: list) -> list:
@@ -41,11 +42,15 @@ def creating_index_from_excel(file: pd.DataFrame, knowledge_base: list) -> list:
                 "id": f'{id}',
                 "Label": (row["LIBELLE"] if not f'{row["LIBELLE"]}'=="nan" else ""),
                 "Definition": (row["DEF"] if not f'{row["DEF"]}'=="nan" else ""), 
-                "Label_def_vector": MODEL.encode(f'{row["LIBELLE"]}: {row["DEF"]}').tolist()
             }
-            knowledge_base.append(document)
-            id += 1
-
+        else:
+            document = {
+                "id": f'{id}',
+                "Label": (row["LIBELLE"] if not f'{row["LIBELLE"]}'=="nan" else ""),
+                "Definition": (""), 
+            }
+        knowledge_base.append(document)
+        id += 1
 
     return knowledge_base
 
@@ -68,15 +73,8 @@ def create_or_update_index_on_Azure():
         SimpleField(name="id", type=SearchFieldDataType.String, key=True, retrievable=True),
         SearchableField(name="Label", type=SearchFieldDataType.String, filterable=True, retrievable=True),
         SearchableField(name="Definition", type=SearchFieldDataType.String, filterable=True, retrievable=True),
-        SearchField(name="Label_def_vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), searchable=True, vector_search_dimensions=384, vector_search_profile="myHnswProfile")
-
     ]
 
-    vector_search = VectorSearch(
-        algorithms=[HnswVectorSearchAlgorithmConfiguration(name="myHnsw", kind=VectorSearchAlgorithmKind.HNSW, 
-                                                           parameters=HnswParameters(m=4, ef_construction=400, ef_search=500, metric="cosine"))], 
-        profiles=[VectorSearchProfile(name="myHnswProfile", algorithm="myHnsw")],
-    )
 
     semantic_config = SemanticConfiguration(
         name="eurovoc-poc-semantic-tagging",
@@ -91,7 +89,7 @@ def create_or_update_index_on_Azure():
     semantic_settings = SemanticSettings(configurations=[semantic_config])
 
     index = SearchIndex(
-        name = index_name, fields = fields, vector_search=vector_search, semantic_settings=semantic_settings
+        name = index_name, fields = fields, semantic_settings=semantic_settings
     )
 
     result = index_client.create_or_update_index(index)

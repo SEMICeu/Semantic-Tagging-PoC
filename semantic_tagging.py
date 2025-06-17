@@ -10,7 +10,6 @@ import openai
 from sentence_transformers import SentenceTransformer
 
 # Set up Azure Search Client
-
 load_dotenv(override=True)
 search_endpoint = os.environ.get("SEACRH_ENDPOINT")
 index_name = os.environ.get("INDEX_NAME")
@@ -25,8 +24,7 @@ api_version = os.environ.get("API_VERSION")
 credential = AzureKeyCredential(api_key)
 search_client = SearchClient(endpoint=search_endpoint, index_name=index_name, credential=credential)
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
-
+# Create functions for parsing input from user
 def read_pdf(file):
     """Extract text from PDF file."""
     pdf_reader = PyPDF2.PdfReader(file)
@@ -43,26 +41,23 @@ def read_word(file):
         text.append(paragraph.text)
     return "\n".join(text)
 
+# Functions for performing the semantic tagging
 def perform_search(query):
     """
     Perform semantic search on the Azure AI index and return top 10 tags.
     """
-    try: 
-        vector_query = RawVectorQuery(vector=model.encode(query).tolist(), k_nearest_neighbors=3, fields="Label_def_vector")
-
-        #search_results = search_client.search(query, include_total_count=True)
-        
+    try:         
         search_results = search_client.search(
             search_text=query, 
-            vector_queries=[vector_query],
-            top=10, 
+            vector_queries=None,
+            top=50,   
         )
         
         tags = []
         for item in search_results:
             # Assuming that the search result has the field Label
             tags.append(item["Label"])
-            if len(tags) >= 10:
+            if len(tags) >= 50:
                 break
         return tags
     except Exception as e:
@@ -75,9 +70,9 @@ client = AzureOpenAI(api_key=azure_openai_api_key, azure_endpoint=azure_openai_a
 def filter_with_LLM(user_input, search_results):
     """Use GPT-4 to filter the search results based on relevance"""
     prompt = (
-        f"Based on the user input: '{user_input}', "
-        f"evaluate the following search results and return only the relevant ones: {search_results}"
-        f"Provide your answer as a list of relevant tags separated by commas."
+        f"Based on the following document summary: '{user_input}', "
+        f"evaluate the following EuroVoc descriptors and return only the relevant ones for annotating the document: {search_results}"
+        f"Provide your answer as a list of maximum 10 relevant descriptors separated by commas."
     )
 
     response = client.chat.completions.create(
@@ -109,7 +104,7 @@ def predict_tags(text):
 
     return relevant_tags
 
-
+# Define streamlit app
 def main():
     # App title
     st.title("Semantic Tagging Solution")
