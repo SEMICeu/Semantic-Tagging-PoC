@@ -17,7 +17,6 @@ comm==0.2.2
 debugpy==1.8.14
 decorator==5.2.1
 distro==1.9.0
-docx==0.2.4
 et_xmlfile==2.0.0
 exceptiongroup==1.2.2
 executing==2.2.0
