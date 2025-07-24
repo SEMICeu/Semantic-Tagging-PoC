@@ -114,9 +114,9 @@ After launching, you can use the Semantic Tagging PoC through its simple web int
 
 1. **Open the Application Interface**: Once the server is running, access the interface via your web browser (usually at `http://localhost` on a specified port, which the console will indicate). You should see a page with options to input text or upload a document.
 
-<div style="text-align:center;">
-  <img src="images/home_screen.png" alt="Semantic Tagging Home Screen" style="width:50%;"/>
-</div>
+<p align="center">  
+   <img src="images/home_screen.png" alt="Semantic Tagging Home Screen" style="width:50%;"/>
+</p>
 
 *Figure 2: Overview of the UI.*
 
