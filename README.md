@@ -33,6 +33,12 @@ As a proof of concept (PoC), this project was intended to test and validate diff
 
 ## Features and Functionality
 
+<div style="background-color:white; padding:10px; display:inline-block;">
+  <img src="images/IMG_1120.PNG" alt="Semantic Tagging Architecture" />
+</div>
+
+*Figure 1: Overview of the Semantic Tagging Pipeline.*
+
 - **Automatic Semantic Tagging**: Given an input text or document, the tool automatically identifies and suggests relevant tags from the EuroVoc vocabulary. This aids in classifying the document's content by themes/topics.
 - **Hybrid AI Approach**: The PoC combines semantic search with generative AI (GPT-4) to enhance tagging accuracy. It uses an Azure AI Search index of EuroVoc terms to identify initial candidate tags, and then an OpenAI GPT-4 model refines and filters these suggestions before presenting the final tags.
 - **Support for Documents and Text**: The tool can process both free-text input and uploaded documents. It supports text input (e.g., users can paste a paragraph) and document upload (in PDF format) to extract text for tagging.
@@ -108,6 +114,12 @@ After launching, you can use the Semantic Tagging PoC through its simple web int
 
 1. **Open the Application Interface**: Once the server is running, access the interface via your web browser (usually at `http://localhost` on a specified port, which the console will indicate). You should see a page with options to input text or upload a document.
 
+<div style="background-color:white; padding:10px; display:inline-block;">
+  <img src="images/home_screen.png" alt="Semantic Tagging Home Screen" />
+</div>
+
+*Figure 2: Overview of the UI.*
+
 2. **Input your Content**: You have two options:
    - **Option 1**: Paste/Type Text. There will be a text box where you can directly type or paste the text you want to tag. This is useful for short snippets, paragraphs, or any text content.
    - **Option 2**: Upload Document. You can choose a file from your computer (commonly a PDF) to upload. The tool will extract text from the file for processing. (Supported formats in this PoC are PDF)
@@ -120,7 +132,19 @@ After launching, you can use the Semantic Tagging PoC through its simple web int
 
 4. **View Results**: The interface will display the recommended semantic tags for your document. Each tag corresponds to a EuroVoc concept that the system found relevant. For instance, if your text concerned renewable energy policies in Europe, you might see tags such as "Renewable energy", "Energy policy", "Sustainable development", etc., assuming those are EuroVoc terms relevant to the content. The tags provide a quick thematic overview of the document's subject matter.
 
+<div style="background-color:white; padding:10px; display:inline-block;">
+  <img src="images/generated_tags.png" alt="Semantic Tagging Home Screen" />
+</div>
+
+*Figure 3: Example of generated tags.*
+
 5. **(Optional) Refine Tags**: The PoC interface allows you to refine the results. There may be an input field to "ask for refinements" or provide feedback. You can type a follow-up query or instruction if something is missing or if you seek different granularity. For instance, you could ask, "Only show more specific tags related to environmental policy," or "Why was 'Climate change' suggested?" – and the system (via the AI model) will adjust the tags or provide an explanation based on your request. This interactive loop is powered by the LLM, allowing you to iteratively improve the tagging output if needed.
+
+<div style="background-color:white; padding:10px; display:inline-block;">
+  <img src="images/refine_tags.png" alt="Semantic Tagging Home Screen" />
+</div>
+
+*Figure 4: Refine tags window.*
 
 6. **Repeat as Needed**: You can clear the input and try another text or document, or adjust your input and generate tags again. There’s no need to restart the app for each document; it can handle multiple uses in one session.
 
@@ -129,8 +153,8 @@ Output format: The tags are typically presented as a list of terms. In a full im
 ## Further Information
 
 - **Documentation**: Currently, this README serves as the primary documentation. Additional documentation may be provided in future (for example, a wiki or GitHub Pages site) if the project is extended.
-- **Related Projects**: This PoC is part of a series of “AI for Interoperability” experiments under SEMIC. You might also be interested in related prototypes, such as the GraphRAG PoC (Graph-based Retrieval-Augmented Generation chatbot for data modelling) and others. These are separate projects aiming to enhance semantic interoperability using AI.
-- **SEMIC Community**: For context about the broader initiative, check out the Interoperable Europe portal’s section on SEMIC. There are blog posts, news, and the SEMIC annual conference materials showcasing how semantic interoperability solutions (like this PoC) are being used in government and public administration contexts.
+- **Related Projects**: This PoC is part of a series of “AI for Interoperability” experiments under SEMIC. You might also be interested in related prototypes, such as the GraphRAG PoC (Graph-based Retrieval-Augmented Generation chatbot for data modelling) and others (for more info follow this [link](https://interoperable-europe.ec.europa.eu/collection/semic-support-centre/ai-interoperability)). These are separate projects aiming to enhance semantic interoperability using AI.
+- **SEMIC Community**: For context about the broader initiative, check out the [Interoperable Europe portal’s section on SEMIC](https://interoperable-europe.ec.europa.eu/collection/semic-support-centre). There are blog posts, news, and the SEMIC annual conference materials showcasing how semantic interoperability solutions (like this PoC) are being used in government and public administration contexts.
 
 
 
