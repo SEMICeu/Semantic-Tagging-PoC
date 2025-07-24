@@ -1,12 +1,31 @@
-Any comments on my Readme.md? # Semantic Tagging Solution
+# Semantic Tagging Solution
 
 ## Overview
 
 **Semantic-Tagging-PoC** is a proof of concept resulting from a collaboration between DG DIGIT and the Publications Office of the EU (OP) on the use of Artificial Intelligence for semantic tagging.
 
-The primary goal of this initiative was to explore various AI-based approaches for tagging documents with relevant semantic labels from a controlled vocabulary to enhance their searchability and organisation. The proof of concept specifically employed the EuroVoc multilingual thesaurus (an EU vocabulary of concepts) to tag text content. Different approaches were tested, but it was concluded that leveraging a combination of a search index and Generative AI was the most effective method for suggesting relevant EuroVoc descriptors for any given PDF document or text (see table below).
+The primary goal of this initiative was to explore various AI-based approaches for tagging documents with relevant semantic labels from a controlled vocabulary to enhance their searchability and organisation. The proof of concept specifically employed the EuroVoc multilingual thesaurus (an EU vocabulary of concepts) to tag text content. 
 
-| Table with results of the evaluation |
+Several approaches were tested and compared based on **accuracy**, **recall**, and **precision** metrics. The most effective method combined a semantic search index with Generative AI, resulting in the best balance between relevance and coverage. The results of the evaluation are summarised below:
+
+### Evaluation Results
+
+| **Approach**                                | **Accuracy** | **Recall** | **Precision** |
+|---------------------------------------------|--------------|------------|----------------|
+| Semantic Search                              | 0.34         | 0.30       | 0.31           |
+| Hybrid Search (SentBERT)                     | 0.63         | 0.35       | 0.30           |
+| Hybrid Search (bge-small)                    | 0.45         | 0.32       | 0.22           |
+| Zero-shot Classification                     | 0.63         | 0.40       | 0.16           |
+| Search & Classification Approach             | **0.91**     | **0.46**   | 0.17           |
+| Search & Classification Approach (v2)        | 0.82         | 0.42       | 0.16           |
+
+> 🔎 **Note**: The "Search & Classification" approaches combine embedding-based retrieval with a classification step, using GPT-4 to refine candidate tags from the search index. These hybrid strategies delivered the highest accuracy in the evaluation.
+
+In addition to quantitative performance, qualitative feedback highlighted that:
+
+- The annotations produced by the tool were **finer-grained** than those from human annotators.
+- Results were **more consistent and coherent**, particularly in multi-topic or complex documents.
+- Users perceived the tagging suggestions as **more accurate and reliable** overall.
 
 Comprehensive details on the analysis of different methods can be found in the report available on the SEMIC support centre. Additionally, individuals interested in these various approaches can find their code available in dedicated branches within this repository.
 
