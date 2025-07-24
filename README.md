@@ -34,7 +34,7 @@ As a proof of concept (PoC), this project was intended to test and validate diff
 ## Features and Functionality
 
 <p style="background-color:white; padding:10px; display:inline-block;">
-  <img src="images/IMG_1120.PNG" alt="Semantic Tagging Architecture" />
+  <img src="images/logical_flow.png" alt="Semantic Tagging Architecture" />
 </p>
 
 *Figure 1: Overview of the Semantic Tagging Pipeline.*
@@ -115,7 +115,7 @@ After launching, you can use the Semantic Tagging PoC through its simple web int
 1. **Open the Application Interface**: Once the server is running, access the interface via your web browser (usually at `http://localhost` on a specified port, which the console will indicate). You should see a page with options to input text or upload a document.
 
 <p align="center">  
-   <img src="images/home_screen.png" alt="Semantic Tagging Home Screen" style="width:50%;"/>
+   <img src="images/UI_overview.png" alt="Semantic Tagging Home Screen"/>
 </p>
 
 *Figure 2: Overview of the UI.*
@@ -132,19 +132,7 @@ After launching, you can use the Semantic Tagging PoC through its simple web int
 
 4. **View Results**: The interface will display the recommended semantic tags for your document. Each tag corresponds to a EuroVoc concept that the system found relevant. For instance, if your text concerned renewable energy policies in Europe, you might see tags such as "Renewable energy", "Energy policy", "Sustainable development", etc., assuming those are EuroVoc terms relevant to the content. The tags provide a quick thematic overview of the document's subject matter.
 
-<p align="center">  
-  <img src="images/generated_tags.png" alt="Semantic Tagging Home Screen" style="width:50%;"/>
-</p>  
-
-*Figure 3: Example of generated tags.*
-
 5. **(Optional) Refine Tags**: The PoC interface allows you to refine the results. There may be an input field to "ask for refinements" or provide feedback. You can type a follow-up query or instruction if something is missing or if you seek different granularity. For instance, you could ask, "Only show more specific tags related to environmental policy," or "Why was 'Climate change' suggested?" – and the system (via the AI model) will adjust the tags or provide an explanation based on your request. This interactive loop is powered by the LLM, allowing you to iteratively improve the tagging output if needed.
-
-<p align="center">  
-  <img src="images/refine_tags.png" alt="Semantic Tagging Home Screen" style="width:50%;"/>
-</p>
-
-*Figure 4: Refine tags window.*
 
 6. **Repeat as Needed**: You can clear the input and try another text or document, or adjust your input and generate tags again. There’s no need to restart the app for each document; it can handle multiple uses in one session.
 
