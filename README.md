@@ -33,9 +33,9 @@ As a proof of concept (PoC), this project was intended to test and validate diff
 
 ## Features and Functionality
 
-<div style="background-color:white; padding:10px; display:inline-block;">
+<p style="background-color:white; padding:10px; display:inline-block;">
   <img src="images/IMG_1120.PNG" alt="Semantic Tagging Architecture" />
-</div>
+</p>
 
 *Figure 1: Overview of the Semantic Tagging Pipeline.*
 
@@ -132,17 +132,17 @@ After launching, you can use the Semantic Tagging PoC through its simple web int
 
 4. **View Results**: The interface will display the recommended semantic tags for your document. Each tag corresponds to a EuroVoc concept that the system found relevant. For instance, if your text concerned renewable energy policies in Europe, you might see tags such as "Renewable energy", "Energy policy", "Sustainable development", etc., assuming those are EuroVoc terms relevant to the content. The tags provide a quick thematic overview of the document's subject matter.
 
-<div style="text-align:center;">
+<p align="center">  
   <img src="images/generated_tags.png" alt="Semantic Tagging Home Screen" style="width:50%;"/>
-</div>
+</p>  
 
 *Figure 3: Example of generated tags.*
 
 5. **(Optional) Refine Tags**: The PoC interface allows you to refine the results. There may be an input field to "ask for refinements" or provide feedback. You can type a follow-up query or instruction if something is missing or if you seek different granularity. For instance, you could ask, "Only show more specific tags related to environmental policy," or "Why was 'Climate change' suggested?" – and the system (via the AI model) will adjust the tags or provide an explanation based on your request. This interactive loop is powered by the LLM, allowing you to iteratively improve the tagging output if needed.
 
-<div style="text-align:center;">
+<p align="center">  
   <img src="images/refine_tags.png" alt="Semantic Tagging Home Screen" style="width:50%;"/>
-</div>
+</p>
 
 *Figure 4: Refine tags window.*
 
