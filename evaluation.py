@@ -1,6 +1,8 @@
-from semantic_tagging import predict_tags
+from semantic_tagging import predict_tags, read_pdf
 import pandas as pd
 import os
+import requests
+import io
 
 INPUT_PATH = "PATH_TO_YOUR_FILE"
 
@@ -43,14 +45,21 @@ def main():
     
     # Lists to store recall, precision, and predicted tags
     recall_list, precision_list, prediction_list = [], [], []
+    counter = 0
 
     # Loop through each row of the test corpus 
     for index, row in testing_corpus.iterrows():
 
-        text = row["Article summary "]
+        url = row["item_psi"]
+        response = requests.get(url)
+        response.raise_for_status()
+
+        # Convert to file-like object
+        pdf_file = io.BytesIO(response.content)
+        text = read_pdf(pdf_file)
 
         # Get ground truth tags and handle splitting and stripping
-        ground_truth = row["DET tags that express the main subject matter (often with post-coordination)"].split(" + ")
+        ground_truth = row["Tags"].split("_x000D__x000D_\n")
 
         # Skip if ground truth is empty
         if not ground_truth:
@@ -66,8 +75,13 @@ def main():
         prediction_list.append(predicted_tags)
         recall_list.append(recall)
         precision_list.append(precision)
+        counter += 1
+
+        if counter > 300:
+            break
     
     # Add results to the DataFrame
+    testing_corpus = pd.DataFrame()
     testing_corpus["Label created by Auto-tagger"] = prediction_list
     testing_corpus["Recall"] = recall_list
     testing_corpus["Precision"] = precision_list
