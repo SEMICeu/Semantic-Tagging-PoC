@@ -49,10 +49,44 @@ def generate_summary_with_gpt(text):
 
     # Create the prompt for the GPT model
     prompt = (
-        f"You are a knowledgeable assistant that provides coherent and comprehensive summaries of text."
-        f"Please summarize the following text in a clear and complete manner, ensuring that the summary "
-        f"captures all essential points without cutting off in the middle of a sentence. Aim for about "
-        f"3-5 sentences: \n\n{text}"
+f"""
+You are an expert assistant trained to produce high‑quality summaries specifically designed to support EUR‑Lex semantic indexing.
+
+Your task:
+Provide a clear, complete, and coherent summary of the document text below, capturing all essential concepts needed for accurate subject indexing with EuroVoc.
+
+------------------------------------------------------------
+SUMMARY REQUIREMENTS
+------------------------------------------------------------
+
+1) Focus on **content, not metadata**
+   - Summaries must describe what the document is ABOUT.
+   - Do NOT emphasize non-subject metadata (type of act, form, procedure, publication info, authoring institution unless the content is ABOUT the institution).
+
+2) Capture all **main ideas, substantive topics, issues, measures, actors, sectors, products, policies, legal areas**, and any **geographical scope** mentioned.
+   - Summaries should retain all information that could influence EuroVoc descriptor selection.
+
+3) Preserve **specificity**
+   - If the text mentions detailed elements (e.g., product types, agreements, sectors, legal bases, state aid details, sanctions, financial mechanisms, case‑law issues), include them.
+
+4) Maintain **neutral, factual, and concise wording**
+   - No interpretation, judgment, or added context beyond what the text provides.
+   - Rephrase faithfully without omitting essential concepts.
+
+5) Ensure **coherence and completeness**
+   - The summary must not cut off mid‑sentence.
+   - It must form a complete narrative that covers all meaningful subject matter.
+
+------------------------------------------------------------
+INPUT TEXT
+------------------------------------------------------------
+{text}
+
+------------------------------------------------------------
+TASK
+------------------------------------------------------------
+Produce one paragraph (or more if needed) summarizing the document in a complete, precise, and concept‑rich manner suitable for downstream EuroVoc indexing.
+"""
     )
 
     # Generate completion using GPT model
@@ -154,10 +188,89 @@ def filter_with_LLM(user_input, search_results):
     Returns:
         list: A list of relevant tags based on the user's input.
     """
+    
     prompt = (
-        f"Based on the following document summary: '{user_input}', "
-        f"evaluate the following EuroVoc descriptors and return only the relevant ones for annotating the document: {search_results}."
-        f"Provide your answer as a list of maximum 10 relevant descriptors separated by commas."
+f"""
+You are an expert EUR‑Lex semantic indexer. 
+
+Your task: Given (1) a document summary and (2) a list of candidate EuroVoc descriptors, select a maximum of 10 descriptors that best reflect the document’s content. 
+You must follow the official EUR‑Lex indexing methodology exactly. 
+
+------------------------------------------------------------ 
+MANDATORY INDEXING RULES (from EUR‑Lex Indexing Policy) 
+------------------------------------------------------------ 
+1. Index ONLY the content of the document 
+- Do NOT index physical or contextual metadata such as: 
+    • type of document (regulation, directive, opinion, etc.) 
+    • the institution as author (e.g. “European Commission”) unless the document is ABOUT that institution’s functioning or role 
+    • applicant/defendant/parties or procedure type in case-law 
+    • document form, publication type, or classification category 
+- EuroVoc descriptors must represent the *subject matter*, not metadata. 
+2. Apply the 3 stages of indexing 
+    a. Understand the document content 
+    b. Identify the main concepts with retrieval value c
+    . Translate those concepts into EuroVoc descriptors 
+3. Be as specific as possible 
+    - Always choose the most specific descriptor available for a concept. 
+    - Replace general descriptors with narrower ones when the narrow term fits. 
+    Examples: 
+        • use “trade agreement (EU)” instead of “agreement (EU)” 
+        • use “citrus fruit” instead of “fruit” 
+    - If no specific descriptor exists, use the closest broader descriptor. 
+4. Do NOT use several descriptors from the same hierarchical line 
+    - Never pair a broad term with its narrower term. 
+    - Only choose the most specific one. 
+    - Descriptors on the same hierarchy level (siblings) may be combined if both are relevant. 
+5. Prefer pre‑coordinated descriptors 
+    - Always choose EuroVoc descriptors that are explicitly EU‑contextualised when they exist: 
+        • “import (EU)” instead of “import” 
+        • “export (EU)” instead of “export” 
+        • “financing of the EU budget” instead of generic “budget financing” 
+        • “EU programme” instead of “action programme” 
+    - Only combine simple descriptors when no pre‑coordinated descriptor covers the concept. 
+6. Use geographical descriptors when appropriate 
+    - Include a country or region descriptor when: 
+        • the document explicitly concerns that country/region 
+        • a procedure, aid measure, agreement or statistics relates to that country 
+    - For groups of countries, prefer the group descriptor over listing each member. 
+    - EU regions only (not regions of third countries). 
+7. Avoid incorrect or out‑of‑context descriptors 
+    - Do not infer content not present in the text. 
+    - Ensure semantic alignment by checking contextual meaning, hierarchy, notes, USE/UF relations. 
+    - A descriptor must reflect the actual document concepts, not suppositions. 
+8. Combine descriptors only when necessary 
+    - If no pre‑coordinated descriptor exists, combine simple descriptors to represent a compound concept. 
+    - Ensure combinations do not violate hierarchical‑line constraints. 
+9. Maintain consistency with EUR‑Lex indexing practice 
+    - Use descriptors typically found for similar document types (agreements, state aid, trade, fisheries, market measures, case law, etc.). 
+    - Prioritise descriptors that reflect: 
+        • policy domain 
+        • product type 
+        • sector of activity 
+        • measure/action (e.g. sanctions, aid, financing, approvals) 
+        • geographical scope 
+        • EU context (when relevant) 
+        
+------------------------------------------------------------ 
+OUTPUT INSTRUCTIONS 
+------------------------------------------------------------ 
+Return **ONLY** a flat list of **maximum 10 EuroVoc descriptors**, separated by commas. 
+Do not include explanations, numbers, bullets, or commentary. 
+Do not add descriptors that are not in the candidate list. 
+
+------------------------------------------------------------ 
+INPUT 
+------------------------------------------------------------ 
+
+Document summary: {user_input} 
+Candidate EuroVoc descriptors: {search_results} 
+
+------------------------------------------------------------ 
+TASK 
+------------------------------------------------------------ 
+Select the 10 (or fewer) descriptors from the candidate list that best satisfy the EUR‑Lex indexing rules above. 
+Return the final list as comma-separated descriptors only.
+"""
     )
 
     response = client.chat.completions.create(
@@ -190,9 +303,87 @@ def tags_with_LLM(user_input):
     Returns:
         list: A list of proposed Euro<voc descriptors.
     """
+    
     prompt = (
-        f"Can you propose EuroVoc descriptors for tagging this document with meaningful metadata about its content, based on its summary: '{user_input}', "
-        f"Provide your answer as a list of relevant EuroVoc descriptors separated by commas. Avoid proposing descriptors about country or region names (ex: Turkye, Maghreb, ...)"
+f"""
+You are an expert EUR‑Lex semantic indexer.
+
+Your task:
+Given a document summary, propose a list of EuroVoc descriptors that best represent the document’s subject content (not metadata). Your output must be a comma-separated list of descriptors (maximum 10).
+
+------------------------------------------------------------
+MANDATORY EUR‑LEX INDEXING PRINCIPLES
+------------------------------------------------------------
+
+1) Index ONLY the content of the document
+   - Do NOT index ‘physical entity’ metadata such as:
+     • type/form of act (regulation, directive, opinion, etc.)
+     • institution as author (e.g., “European Commission”) unless the content is ABOUT its role/competences/organisation
+     • parties/applicant/defendant/procedure type (case law)
+     • publication/classification categories
+   - EuroVoc must represent subject matter: what the document is ABOUT.
+
+2) Apply the 3 stages of indexing
+   a. Understand the document (concepts and ideas)
+   b. Identify principal concepts with retrieval value
+   c. Express these concepts using EuroVoc descriptors (check domain, microthesaurus, USE/UF, NT/BT, RT, scope notes)
+
+3) Be as specific as possible
+   - Prefer the narrowest descriptor that correctly matches the concept.
+   - Replace generic terms with specific ones when the specifics are present.
+     Examples:
+       • use “trade agreement (EU)” instead of “agreement (EU)”
+       • use “citrus fruit” instead of “fruit”
+   - If a specific descriptor does not exist, use the closest broader one.
+
+4) Avoid hierarchical duplication
+   - Do NOT select both a broad descriptor and its narrower term from the same hierarchical line.
+   - Choose only the most specific applicable descriptor.
+   - Sibling descriptors can be used together if both are relevant and not duplicative.
+
+5) Prefer pre‑coordinated EU descriptors
+   - Choose EU‑specific pre‑coordinated forms when available:
+     • “import (EU)” rather than “import”
+     • “export (EU)” rather than “export”
+     • “EU programme” rather than “action programme”
+     • “financing of the EU budget” rather than generic “budget financing”
+   - Combine simple descriptors only if no suitable pre‑coordinated descriptor exists.
+
+6) Use geographical descriptors when clearly relevant
+   - Include a country/region when the document explicitly concerns that geography (e.g., state aid, agreement, statistics, origin of product).
+   - For groups of countries or international organisations, prefer the group descriptor (e.g., “European Union”, “EEA”, “EFTA”) rather than listing all members.
+   - Regions of EU Member States may be used; regions of third countries generally should not.
+
+7) Avoid incorrect or out‑of‑context descriptors
+   - Do not infer concepts not supported by the summary.
+   - Ensure the descriptor’s semantic scope (notes, hierarchy, USE/UF) truly fits the document.
+
+8) Combine descriptors only when necessary
+   - If a compound concept lacks a single pre‑coordinated descriptor, use a minimal combination of simple descriptors—without violating rule (4) on hierarchical duplication.
+
+9) Maintain consistency with EUR‑Lex practice
+   - Favour descriptors that capture the substantive policy/measure/action, sector/product, EU context, and geography (when applicable).
+   - Typical areas: agreements, state aid, trade/market measures, fisheries, budget/finance, market approval, sanctions, competition/mergers, case‑law subject matter, etc.
+
+------------------------------------------------------------
+OUTPUT REQUIREMENTS
+------------------------------------------------------------
+• Return ONLY a flat list of up to 10 EuroVoc descriptors, separated by commas.
+• Do not include explanations, numbers, bullets, or commentary.
+• Propose descriptors that exist in EuroVoc; prefer EU pre‑coordinated forms where applicable.
+
+------------------------------------------------------------
+INPUT
+------------------------------------------------------------
+Document summary:
+{user_input}
+
+------------------------------------------------------------
+TASK
+------------------------------------------------------------
+Propose up to 10 EuroVoc descriptors that best represent the document content, following all rules above. Return a comma-separated list only.
+
+"""
         )
     
 
