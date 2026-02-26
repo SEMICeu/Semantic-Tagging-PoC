@@ -74,6 +74,8 @@ To run this application, the following is required:
 - **OpenAI's GPT-4**: Advanced language model for generating summaries and filtering tags.
 - **Sentence Transformers**: For encoding text to generate embeddings.
 
+Note: For the purpose of this experiment an LLM and search index deployed on an Azure infrastructure were leveraged. However, alternative options can also be used by adapting the configuration file.  
+
 ## Installation and Setup
 
 1. Clone the repository:
@@ -87,14 +89,14 @@ To run this application, the following is required:
 
 Before running the application, you need to configure the environment variables. In the root directory, create a .env file and define the following variables:
 ```json
-AZURE_OPENAI_API_KEY=<your-azure-openai-api-key>
-AZURE_OPENAI_ENDPOINT=<your-azure-open-ai-endpoint>
+LLM_API_KEY=<your-llm-api-key>
+LLM_API_ENDPOINT=<your-llm-api-endpoint>
 DEPLOYMENT_NAME=<your-model-name>
 API_VERSION=<your-azure-openai-version>
 
-SEARCH_ENDPOINT<=your-azure-search-endpoint>
-API_KEY=<your-azure-search-api-key>
-INDEX_NAME=<your-azure-search-index-name>
+SEARCH_ENDPOINT<=your-search-endpoint>
+API_KEY=<your-search-api-key>
+INDEX_NAME=<your-index-name>
 ```
 See env.sample for an example.
 

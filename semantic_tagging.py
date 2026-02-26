@@ -9,22 +9,40 @@ from azure.search.documents.models import RawVectorQuery
 import PyPDF2
 import re
 from sentence_transformers import SentenceTransformer
-from openai import AzureOpenAI
+from openai import AzureOpenAI, OpenAI
+from qdrant_client import QdrantClient
 
 # Load environment variables from a .env file
 load_dotenv(override=True)
+azure_deployment = os.environ.get("AZURE_DEPLOYMENT")
+if not azure_deployment:
+    host = os.environ.get("HOST")
+    port = os.environ.get("PORT")
+
 search_endpoint = os.environ.get("SEACRH_ENDPOINT")
 index_name = os.environ.get("INDEX_NAME")
 api_key = os.environ.get("API_KEY")
 
-azure_openai_api_key = os.environ.get("AZURE_OPENAI_KEY")
-azure_openai_api_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
+llm_api_key = os.environ.get("LLM_API_KEY")
+llm_api_endpoint = os.environ.get("LLM_API_ENDPOINT")
 deployment_name = os.environ.get("DEPLOYMENT_NAME")
 api_version = os.environ.get("API_VERSION")
 
 # Initialise Azure Key Credential and Search Client
-credential = AzureKeyCredential(api_key)
-search_client = SearchClient(endpoint=search_endpoint, index_name=index_name, credential=credential)
+if azure_deployment:
+    credential = AzureKeyCredential(api_key)
+    search_client = SearchClient(endpoint=search_endpoint, index_name=index_name, credential=credential)
+else: 
+    search_client = QdrantClient(
+            host=host, 
+            port=port,
+        )
+
+# Initialise LLM client
+if azure_deployment:
+    client = AzureOpenAI(api_key=llm_api_key, azure_endpoint=llm_api_endpoint, api_version=api_version)
+else: 
+    client = OpenAI(api_key=llm_api_key, base_url=llm_api_endpoint)
 
 # Load the pre-trained SentenceTransformer model for text embeddings
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -156,12 +174,20 @@ def perform_search(query):
     try: 
         vector_query = RawVectorQuery(vector=model.encode(query).tolist(), k=10, fields="Label_def_vector")
         
-        search_results = search_client.search(
-            search_text=None, 
-            vector_queries=[vector_query],
-            top=10,
-             
-        )
+        if azure_deployment:
+            search_results = search_client.search(
+                search_text=None, 
+                vector_queries=[vector_query],
+                top=10,
+                
+            )
+        else: 
+            search_results = client.query_points(
+                collection_name=index_name,
+                query=[vector_query],
+                limit=10,
+            )
+
         
         tags = []
         for item in search_results:
@@ -173,9 +199,6 @@ def perform_search(query):
     except Exception as e:
         st.error(f"An error occurred: {e}")
         return []
-    
-# Initialise Azure OpenAI client for GPT-4
-client = AzureOpenAI(api_key=azure_openai_api_key, azure_endpoint=azure_openai_api_endpoint, api_version=api_version)
 
 def filter_with_LLM(user_input, search_results):
     """
