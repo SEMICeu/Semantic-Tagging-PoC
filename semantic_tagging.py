@@ -15,11 +15,11 @@ from qdrant_client import QdrantClient
 # Load environment variables from a .env file
 load_dotenv(override=True)
 azure_deployment = os.environ.get("AZURE_DEPLOYMENT")
-if not azure_deployment:
-    host = os.environ.get("HOST")
-    port = os.environ.get("PORT")
 
 search_endpoint = os.environ.get("SEACRH_ENDPOINT")
+if not search_endpoint:
+    host = os.environ.get("HOST")
+    port = os.environ.get("PORT")
 index_name = os.environ.get("INDEX_NAME")
 api_key = os.environ.get("API_KEY")
 
@@ -29,7 +29,7 @@ deployment_name = os.environ.get("DEPLOYMENT_NAME")
 api_version = os.environ.get("API_VERSION")
 
 # Initialise Azure Key Credential and Search Client
-if azure_deployment:
+if search_endpoint:
     credential = AzureKeyCredential(api_key)
     search_client = SearchClient(endpoint=search_endpoint, index_name=index_name, credential=credential)
 else: 
@@ -174,7 +174,7 @@ def perform_search(query):
     try: 
         vector_query = RawVectorQuery(vector=model.encode(query).tolist(), k=10, fields="Label_def_vector")
         
-        if azure_deployment:
+        if search_endpoint:
             search_results = search_client.search(
                 search_text=None, 
                 vector_queries=[vector_query],
